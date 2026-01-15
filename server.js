@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import session from 'express-session';
+import passport from 'passport';
+import GoogleStrategy from 'passport-google-oauth20';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +24,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+// Dashboard redirect for OAuth
+app.get('/dashboard', (req, res) => {
+  res.redirect('/');
+});
+
 // Session middleware
 app.use(session({
   secret: 'llc-governance-secret-key',
@@ -29,6 +36,47 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false }
 }));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport serialization
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  db.get('SELECT * FROM users WHERE id = ?', [id], (err, user) => {
+    done(err, user);
+  });
+});
+
+// Google OAuth Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID || 'your-google-client-id',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your-google-client-secret',
+    callbackURL: 'http://localhost:3000/auth/google/callback'
+  },
+  (accessToken, refreshToken, profile, done) => {
+    // Find or create user
+    db.get('SELECT * FROM users WHERE provider = ? AND provider_id = ?', ['google', profile.id], (err, user) => {
+      if (err) return done(err);
+      if (user) {
+        return done(null, user);
+      } else {
+        // Create new user
+        db.run('INSERT INTO users (username, provider, provider_id, role) VALUES (?, ?, ?, ?)',
+          [profile.displayName, 'google', profile.id, 'member'], function(err) {
+          if (err) return done(err);
+          db.get('SELECT * FROM users WHERE id = ?', [this.lastID], (err, newUser) => {
+            done(err, newUser);
+          });
+        });
+      }
+    });
+  }
+));
 
 // Database setup
 const dbPath = path.join(__dirname, 'governance.db');
@@ -40,7 +88,9 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
+    password TEXT,
+    provider TEXT,
+    provider_id TEXT,
     role TEXT DEFAULT 'member',
     household_id INTEGER,
     created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -265,14 +315,35 @@ function requireRole(role) {
   };
 }
 
+// OAuth routes
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }));
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
+  (req, res) => {
+    // Successful authentication, redirect to dashboard
+    res.redirect('/dashboard');
+  }
+);
+
 // Auth routes
 app.post('/api/register', async (req, res) => {
   const { username, password, role = 'member' } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  if (!username) return res.status(400).json({ error: 'Username required' });
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    db.run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, role], function(err) {
+    let query, params;
+    if (password) {
+      // Password registration
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query = 'INSERT INTO users (username, password, role) VALUES (?, ?, ?)';
+      params = [username, hashedPassword, role];
+    } else {
+      // OAuth registration (handled by Passport)
+      return res.status(400).json({ error: 'Use OAuth for registration without password' });
+    }
+
+    db.run(query, params, function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ id: this.lastID, username, role });
     });
@@ -283,19 +354,31 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  if (!username) return res.status(400).json({ error: 'Username required' });
 
   db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+    // Check if OAuth user (no password) or password user
+    if (user.provider) {
+      // OAuth user, allow login without password
+      req.session.userId = user.id;
+      req.session.role = user.role;
+      req.session.householdId = user.household_id;
+      res.json({ id: user.id, username: user.username, role: user.role, provider: user.provider });
+    } else if (password) {
+      // Password user
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
-    req.session.userId = user.id;
-    req.session.role = user.role;
-    req.session.householdId = user.household_id;
-    res.json({ id: user.id, username: user.username, role: user.role });
+      req.session.userId = user.id;
+      req.session.role = user.role;
+      req.session.householdId = user.household_id;
+      res.json({ id: user.id, username: user.username, role: user.role });
+    } else {
+      return res.status(400).json({ error: 'Password required' });
+    }
   });
 });
 
