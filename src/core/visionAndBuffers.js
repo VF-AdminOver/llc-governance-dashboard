@@ -1,5 +1,5 @@
 /**
- * Vision and Buffers planner for Vassell Household Finance & Governance
+ * Vision and Buffers planner for LLC Governance Dashboard
  * Manages emergency funds, sinking funds, and long-term financial goals
  */
 

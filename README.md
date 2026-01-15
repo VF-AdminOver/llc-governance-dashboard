@@ -1,4 +1,4 @@
-# 🏠 Family LLC Dashboard
+# 🏠 LLC Governance Dashboard
 
 A comprehensive member-managed governance and finance hub for multi-adult families and LLCs. Features voting portal, dividend tracking, document vault, and fair cost sharing with unit-based calculations.
 

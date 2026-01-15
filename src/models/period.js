@@ -1,5 +1,5 @@
 /**
- * Period data model for Vassell Household Finance & Governance
+ * Period data model for LLC Governance Dashboard
  * Represents a monthly financial period with all associated data
  */
 

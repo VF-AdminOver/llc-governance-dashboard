@@ -1,5 +1,5 @@
 /**
- * Unit Method calculation engine for Vassell Household Finance & Governance
+ * Unit Method calculation engine for LLC Governance Dashboard
  * Implements fair cost sharing with income caps and optional overrides
  */
 

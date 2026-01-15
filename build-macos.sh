@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Vassell Household Finance & Governance - macOS Build Script
+# LLC Governance Dashboard - macOS Build Script
 # This script packages the app as a standalone macOS application
 
 set -e
 
-echo "🏠 Building Vassell Household Finance & Governance for macOS..."
+echo "🏠 Building LLC Governance Dashboard for macOS..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -82,9 +82,9 @@ npm run dist:mac
 echo -e "${GREEN}✓ Build completed successfully!${NC}"
 echo ""
 echo -e "${BLUE}Your macOS app is ready in the 'dist' directory:${NC}"
-echo "  - .app file: dist/mac/Vassell Household Finance.app"
-echo "  - .dmg file: dist/Vassell Household Finance-1.0.0.dmg"
-echo "  - .zip file: dist/Vassell Household Finance-1.0.0-mac.zip"
+echo "  - .app file: dist/mac/LLC Governance Dashboard.app"
+echo "  - .dmg file: dist/LLC Governance Dashboard-1.0.0.dmg"
+echo "  - .zip file: dist/LLC Governance Dashboard-1.0.0-mac.zip"
 echo ""
 echo -e "${YELLOW}To install:${NC}"
 echo "  1. Double-click the .dmg file"

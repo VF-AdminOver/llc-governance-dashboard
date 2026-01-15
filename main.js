@@ -22,7 +22,7 @@ function createWindow() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vassell Household Finance</title>
+    <title>LLC Governance Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
@@ -38,8 +38,8 @@ function createWindow() {
 </head>
 <body>
     <div class="container">
-        <h1>🏠 Vassell Household Finance & Governance</h1>
-        <p>Planning and budgeting app for multi-adult families</p>
+        <h1>🏠 LLC Governance Dashboard</h1>
+        <p>Member-managed governance and finance hub for families and LLCs</p>
         
         <div>
             <button class="btn btn-primary" onclick="launchFullApp()" id="launchBtn">🚀 Launch Full App</button>
@@ -173,7 +173,7 @@ function createWindow() {
                         appendDebug('🎉 Backend server is running!');
                         
                         document.querySelector('.container').innerHTML = \`
-                            <h1>🏠 Vassell Household Finance & Governance</h1>
+                            <h1>🏠 LLC Governance Dashboard</h1>
                             <p>Full Application Mode - All Features Available</p>
                             <div class="status status-success">
                                 🔵 Full Mode Active - Backend server running on port 3000

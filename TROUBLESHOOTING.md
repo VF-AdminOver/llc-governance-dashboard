@@ -14,11 +14,11 @@
 **If still not visible**:
 ```bash
 # Force quit the app
-pkill -f "Vassell Household Finance"
+pkill -f "LLC Governance Dashboard"
 
 # Rebuild and try again
 npm run pack
-open "dist/mac-arm64/Vassell Household Finance.app"
+open "dist/mac-arm64/LLC Governance Dashboard.app"
 ```
 
 ### **2. Port 3000 Already in Use**
@@ -71,7 +71,7 @@ npm run electron-dev
 npm run pack
 
 # Launch the app
-open "dist/mac-arm64/Vassell Household Finance.app"
+open "dist/mac-arm64/LLC Governance Dashboard.app"
 ```
 
 ### **5. Menu Actions Not Working**
@@ -99,7 +99,7 @@ npm run pack
 ### **Step 1: Check App Status**
 ```bash
 # See if app is running
-ps aux | grep "Vassell Household Finance"
+ps aux | grep "LLC Governance Dashboard"
 
 # Check port usage
 lsof -ti:3000
@@ -114,7 +114,7 @@ npm run electron-dev
 ### **Step 3: Verify File Structure**
 ```bash
 # Check if files exist
-ls -la "dist/mac-arm64/Vassell Household Finance.app/Contents/Resources/"
+ls -la "dist/mac-arm64/LLC Governance Dashboard.app/Contents/Resources/"
 ```
 
 ### **Step 4: Rebuild App**
@@ -193,7 +193,7 @@ lsof -ti:3000
 npm run pack
 
 # Launch app
-open "dist/mac-arm64/Vassell Household Finance.app"
+open "dist/mac-arm64/LLC Governance Dashboard.app"
 ```
 
 ## 🎉 **Success Indicators**

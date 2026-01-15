@@ -10,9 +10,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const { dialog } = require('@electron/remote');
     dialog.showMessageBox({
       type: 'info',
-      title: 'About Vassell Household Finance',
-      message: 'Vassell Household Finance & Governance',
-      detail: 'Planning and budgeting app for multi-adult families\n\nVersion 1.0.0\nBuilt with Electron',
+      title: 'About LLC Governance Dashboard',
+      message: 'LLC Governance Dashboard',
+      detail: 'Member-managed governance and finance hub for families and LLCs\n\nVersion 1.0.0\nBuilt with Electron',
       buttons: ['OK']
     });
   }

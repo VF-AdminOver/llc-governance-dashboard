@@ -1,11 +1,11 @@
 /**
- * Household data model for Vassell Household Finance & Governance
- * Represents the core configuration and settings for a multi-adult family
- */
+ * Household data model for LLC Governance Dashboard
+ * Represents the core configuration and settings for a multi-adult family or LLC
+  */
 
 export class Household {
   constructor(data = {}) {
-    this.name = data.name || "Vassell Household";
+    this.name = data.name || "Sample LLC";
     this.currency = data.currency || "USD";
     this.adults = data.adults || [];
     this.childrenCount = data.childrenCount || 0;

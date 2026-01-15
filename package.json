@@ -1,7 +1,7 @@
 {
-  "name": "vassell-household-finance",
+  "name": "llc-governance-dashboard",
   "version": "1.0.0",
-  "description": "Planning and budgeting app for multi-adult families with cost sharing, care work compensation, and governance",
+  "description": "Member-managed governance and finance hub for families and LLCs with voting, dividends, and cost sharing",
   "main": "main.js",
   "type": "module",
   "scripts": {
@@ -18,16 +18,16 @@
     "dist:mac-universal": "electron-builder --mac --universal"
   },
   "keywords": [
-    "household",
-    "finance",
-    "budgeting",
-    "cost-sharing",
-    "care-work",
+    "llc",
     "governance",
+    "finance",
+    "voting",
+    "dividends",
+    "cost-sharing",
     "electron",
     "desktop-app"
   ],
-  "author": "Vassell Household",
+  "author": "LLC Governance Team",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
@@ -58,7 +58,7 @@
   },
   "build": {
     "appId": "com.vassell.household-finance",
-    "productName": "Vassell Household Finance",
+    "productName": "LLC Governance Dashboard",
     "directories": {
       "output": "dist"
     },
@@ -99,7 +99,7 @@
       "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "dmg": {
-      "title": "Family LLC Dashboard"
+      "title": "LLC Governance Dashboard"
     }
   }
 }

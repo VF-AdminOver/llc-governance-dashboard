@@ -1,5 +1,5 @@
 /**
- * Care Ledger calculator for Vassell Household Finance & Governance
+ * Care Ledger calculator for LLC Governance Dashboard
  * Handles care work compensation using either credit or stipend models
  */
 

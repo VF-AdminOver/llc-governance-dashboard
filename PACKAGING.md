@@ -1,6 +1,6 @@
 # 🍎 Packaging Vassell Household Finance & Governance for macOS
 
-This guide explains how to package the Vassell Household Finance & Governance app as a standalone macOS application using Electron.
+This guide explains how to package the LLC Governance Dashboard app as a standalone macOS application using Electron.
 
 ## 🚀 Quick Start
 
@@ -67,9 +67,9 @@ npm run dist:mac-universal
 
 After building, you'll find these files in the `dist/` directory:
 
-- **`.app` file**: `dist/mac/Vassell Household Finance.app` - Native macOS application
-- **`.dmg` file**: `dist/Vassell Household Finance-1.0.0.dmg` - Installer disk image
-- **`.zip` file**: `dist/Vassell Household Finance-1.0.0-mac.zip` - Compressed archive
+- **`.app` file**: `dist/mac/LLC Governance Dashboard.app` - Native macOS application
+- **`.dmg` file**: `dist/LLC Governance Dashboard-1.0.0.dmg` - Installer disk image
+- **`.zip` file**: `dist/LLC Governance Dashboard-1.0.0-mac.zip` - Compressed archive
 
 ## 🎯 Installation on macOS
 
