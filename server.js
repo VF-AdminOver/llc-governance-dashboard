@@ -168,6 +168,81 @@ db.serialize(() => {
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
 
+  // Assets table
+  db.run(`CREATE TABLE IF NOT EXISTS assets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    household_id INTEGER,
+    name TEXT NOT NULL,
+    type TEXT,
+    value REAL,
+    documents TEXT,
+    status TEXT DEFAULT 'active',
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (household_id) REFERENCES households (id)
+  )`);
+
+  // Asset transactions table
+  db.run(`CREATE TABLE IF NOT EXISTS asset_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    asset_id INTEGER,
+    type TEXT, -- income, expense, valuation
+    amount REAL,
+    description TEXT,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (asset_id) REFERENCES assets (id)
+  )`);
+
+  // Disputes table
+  db.run(`CREATE TABLE IF NOT EXISTS disputes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    proposal_id INTEGER,
+    raised_by INTEGER,
+    objection TEXT NOT NULL,
+    amendment_proposed TEXT,
+    status TEXT DEFAULT 'open',
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proposal_id) REFERENCES proposals (id),
+    FOREIGN KEY (raised_by) REFERENCES users (id)
+  )`);
+
+  // Tasks table
+  db.run(`CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    proposal_id INTEGER,
+    assigned_to INTEGER,
+    description TEXT NOT NULL,
+    due_date DATETIME,
+    status TEXT DEFAULT 'pending',
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proposal_id) REFERENCES proposals (id),
+    FOREIGN KEY (assigned_to) REFERENCES users (id)
+  )`);
+
+  // Governance rules table
+  db.run(`CREATE TABLE IF NOT EXISTS governance_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    household_id INTEGER,
+    rule_name TEXT NOT NULL,
+    rule_type TEXT,
+    conditions TEXT,
+    actions TEXT,
+    is_active BOOLEAN DEFAULT 1,
+    FOREIGN KEY (household_id) REFERENCES households (id)
+  )`);
+
+  // Ownership history table for cap table time machine
+  db.run(`CREATE TABLE IF NOT EXISTS ownership_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    household_id INTEGER,
+    member_id INTEGER,
+    units REAL,
+    ownership_percentage REAL,
+    change_reason TEXT,
+    change_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (household_id) REFERENCES households (id),
+    FOREIGN KEY (member_id) REFERENCES members (id)
+  )`);
+
   console.log('LLC Governance Dashboard database initialized');
 });
 
@@ -426,6 +501,133 @@ app.get('/api/backup', requireAuth, requireRole('admin'), (req, res) => {
       fs.unlink(backupPath, () => {}); // Clean up
     });
   });
+});
+
+// Assets routes
+app.get('/api/assets', requireAuth, (req, res) => {
+  db.all('SELECT * FROM assets WHERE household_id = ?', [req.session.householdId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/api/assets', requireAuth, requireRole('admin'), (req, res) => {
+  const { name, type, value, documents } = req.body;
+  db.run('INSERT INTO assets (household_id, name, type, value, documents) VALUES (?, ?, ?, ?, ?)',
+    [req.session.householdId, name, type, value, JSON.stringify(documents || [])], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ id: this.lastID, name, type, value });
+  });
+});
+
+app.get('/api/assets/:id/transactions', requireAuth, (req, res) => {
+  const { id } = req.params;
+  db.all('SELECT * FROM asset_transactions WHERE asset_id = ? ORDER BY date DESC', [id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// Disputes routes
+app.post('/api/proposals/:id/dispute', requireAuth, (req, res) => {
+  const { id } = req.params;
+  const { objection, amendment } = req.body;
+  db.run('INSERT INTO disputes (proposal_id, raised_by, objection, amendment_proposed) VALUES (?, ?, ?, ?)',
+    [id, req.session.userId, objection, amendment], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ id: this.lastID, objection });
+  });
+});
+
+app.get('/api/disputes', requireAuth, (req, res) => {
+  db.all('SELECT d.*, u.username, p.title FROM disputes d JOIN users u ON d.raised_by = u.id JOIN proposals p ON d.proposal_id = p.id WHERE u.household_id = ?', [req.session.householdId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// Tasks routes
+app.post('/api/tasks', requireAuth, requireRole('admin'), (req, res) => {
+  const { proposalId, assignedTo, description, dueDate } = req.body;
+  db.run('INSERT INTO tasks (proposal_id, assigned_to, description, due_date) VALUES (?, ?, ?, ?)',
+    [proposalId, assignedTo, description, dueDate], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ id: this.lastID, description });
+  });
+});
+
+app.get('/api/tasks', requireAuth, (req, res) => {
+  db.all('SELECT t.*, u.username as assigned_name FROM tasks t LEFT JOIN users u ON t.assigned_to = u.id WHERE t.assigned_to = ? OR ? = (SELECT role FROM users WHERE id = ?)',
+    [req.session.userId, 'admin', req.session.userId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// Governance rules routes
+app.get('/api/governance-rules', requireAuth, (req, res) => {
+  db.all('SELECT * FROM governance_rules WHERE household_id = ?', [req.session.householdId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/api/governance-rules', requireAuth, requireRole('admin'), (req, res) => {
+  const { ruleName, ruleType, conditions, actions } = req.body;
+  db.run('INSERT INTO governance_rules (household_id, rule_name, rule_type, conditions, actions) VALUES (?, ?, ?, ?, ?)',
+    [req.session.householdId, ruleName, ruleType, JSON.stringify(conditions), JSON.stringify(actions)], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ id: this.lastID, ruleName });
+  });
+});
+
+// Cap table time machine
+app.get('/api/cap-table/:date', requireAuth, (req, res) => {
+  const { date } = req.params;
+  // Get ownership at specific date
+  db.all(`
+    SELECT m.id, m.name, oh.units, oh.ownership_percentage, oh.change_reason, oh.change_date
+    FROM members m
+    LEFT JOIN ownership_history oh ON m.id = oh.member_id AND oh.change_date <= ?
+    WHERE m.household_id = ?
+    GROUP BY m.id
+    HAVING MAX(oh.change_date) OR oh.change_date IS NULL
+  `, [date, req.session.householdId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// Proposal templates
+app.get('/api/proposal-templates', requireAuth, (req, res) => {
+  const templates = [
+    {
+      name: 'Sell Asset',
+      fields: ['asset_id', 'valuation', 'buyer', 'closing_date'],
+      checks: ['valuation_required', 'debt_impact_assessment']
+    },
+    {
+      name: 'Add Member',
+      fields: ['name', 'contribution', 'units', 'role'],
+      checks: ['onboarding_required', 'category_selection']
+    },
+    {
+      name: 'Transfer Units',
+      fields: ['from_member', 'to_member', 'units', 'price'],
+      checks: ['right_of_first_refusal', 'waiting_period']
+    },
+    {
+      name: 'Reinvestment Decision',
+      fields: ['amount', 'options', 'timeline'],
+      checks: ['member_elections', 'allocation_calculation']
+    },
+    {
+      name: 'Emergency Fund Draw',
+      fields: ['amount', 'purpose', 'repayment_plan'],
+      checks: ['reserve_policy_check', 'vote_gate']
+    }
+  ];
+  res.json(templates);
 });
 
 app.listen(PORT, () => {
