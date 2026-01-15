@@ -20,6 +20,8 @@
         <div class="card p-5 w-100" style="max-width: 400px;">
             <div class="card-body text-center">
                 <h1 class="card-title mb-4">🏠 LLC Governance Dashboard</h1>
+
+                <!-- Login Form -->
                 <form id="loginForm">
                     <div class="mb-3">
                         <input type="text" id="username" class="form-control" placeholder="Username" required>
@@ -29,12 +31,34 @@
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Login</button>
                 </form>
-                <button id="registerBtn" class="btn btn-link mt-3">Register</button>
-                <hr class="my-3">
-                <button id="googleBtn" class="btn btn-outline-danger w-100">
-                    <i class="fab fa-google me-2"></i>Login with Google
-                </button>
+
+                <button id="showRegisterBtn" class="btn btn-link mt-3">Register New Account</button>
+
+                <!-- Registration Form (Hidden by default) -->
+                <form id="registerForm" style="display: none;">
+                    <hr class="my-3">
+                    <h5>Create Account</h5>
+                    <div class="mb-3">
+                        <input type="text" id="regUsername" class="form-control" placeholder="Username" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" id="regPassword" class="form-control" placeholder="Password" required>
+                    </div>
+                    <div class="mb-3">
+                        <select id="regRole" class="form-select">
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                            <option value="youth">Youth</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Register</button>
+                    <button type="button" id="cancelRegisterBtn" class="btn btn-link mt-2">Cancel</button>
+                </form>
+
                 <div id="authMessage" class="mt-3"></div>
+                <div class="mt-3 small text-muted">
+                    <em>OAuth login requires Google API credentials setup.</em>
+                </div>
             </div>
         </div>
     </div>
@@ -183,10 +207,26 @@
             });
         });
 
-        document.getElementById('registerBtn').addEventListener('click', function() {
-            const username = prompt('Username:');
-            const password = prompt('Password:');
-            const role = prompt('Role (admin/member/youth):') || 'member';
+        // Show registration form
+        document.getElementById('showRegisterBtn').addEventListener('click', function() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('showRegisterBtn').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        });
+
+        // Cancel registration
+        document.getElementById('cancelRegisterBtn').addEventListener('click', function() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('showRegisterBtn').style.display = 'block';
+        });
+
+        // Registration form
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
 
             if (username && password) {
                 fetch('/api/register', {
@@ -198,6 +238,7 @@
                 .then(result => {
                     if (result.id) {
                         document.getElementById('authMessage').innerHTML = '<div class="alert alert-success">Registered successfully! Please login.</div>';
+                        document.getElementById('cancelRegisterBtn').click(); // Go back to login
                     } else {
                         document.getElementById('authMessage').innerHTML = '<div class="alert alert-danger">' + result.error + '</div>';
                     }
@@ -206,10 +247,6 @@
                     document.getElementById('authMessage').innerHTML = '<div class="alert alert-danger">Network error: ' + error.message + '</div>';
                 });
             }
-        });
-
-        document.getElementById('googleBtn').addEventListener('click', function() {
-            window.location.href = '/auth/google';
         });
 
         function logout() {
